@@ -23,7 +23,7 @@ class TCPClient:
             self.socket.close()
 
 HOST = '127.0.0.1'
-PORT = 65432
+PORT = 8005
 
 client = TCPClient(HOST, PORT)
 client.connect()
