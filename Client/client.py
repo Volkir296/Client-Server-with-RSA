@@ -16,10 +16,10 @@ class TcpClient:
         print("Подключение выполнено")
 
     def generate_keys(self):                                        # Генерация и обмен ключей
-        (self.client_pub, self.client_priv) = rsa.newkeys(512)
+        (self.client_pub, self.client_priv) = rsa.newkeys(2048)
         self.data = pickle.dumps(self.client_pub)
         self.client.sendall(self.data)
-        self.data = self.client.recv(1024)
+        self.data = self.client.recv(4096)
         self.serv_pub = pickle.loads(self.data)
 
     def communicate(self):
@@ -32,7 +32,7 @@ class TcpClient:
             else:
                 self.message = rsa.encrypt(self.message.encode("utf-8"), self.serv_pub)   
                 self.client.send(self.message)                              # Отправляем сообщение серверу
-                self.data = self.client.recv(1024)                          # Получаем данные с сервера
+                self.data = self.client.recv(4069)                          # Получаем данные с сервера
                 print("Шифрованное сообщение сервера: ", self.data)
                 self.data = rsa.decrypt(self.data, self.client_priv)
                 self.message = self.data.decode("utf-8")

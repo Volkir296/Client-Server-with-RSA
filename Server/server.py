@@ -23,8 +23,8 @@ class TcpServer:
         
 
     def generate_keys(self):                                # Генерация и обмен ключей
-        (self.serv_pub, self.serv_priv) = rsa.newkeys(512)
-        self.data = self.user.recv(1024)
+        (self.serv_pub, self.serv_priv) = rsa.newkeys(2048)
+        self.data = self.user.recv(4096)
         self.client_pub = pickle.loads(self.data)
         self.data = pickle.dumps(self.serv_pub)
         self.user.sendall(self.data)
@@ -32,7 +32,7 @@ class TcpServer:
 
     def communicate(self):
         while True:
-            self.data = self.user.recv(1024)                                    # Получаем данные от клиента
+            self.data = self.user.recv(4096)                                    # Получаем данные от клиента
             self.message = self.data                                            # Преобразуем байты в строку
             print(f"Шифрованное сообщение клиента: {self.message}")
             self.message = rsa.decrypt(self.message, self.serv_priv)
@@ -48,8 +48,6 @@ class TcpServer:
     def stop(self):                                                         # Выключаем сервак
         self.server.close()                            
         print("Сервер выключен!")
-
-
 
 s = TcpServer()
 s.start()
