@@ -1,45 +1,58 @@
 from socket import *
+import rsa
+import pickle
+
 
 class TcpServer:
-    def __init__(self, ip, port):                       #Конструктор для принятия IP и порта, а также для создания сокета(server) МБ ПРИМЕМ ОТКРЫТЫЙ ЗАКРЫТЫЙ КЛЮЧ
-        self.ip = ip                                    # IPv4
-        self.port = port                                # Порт
-        self.server = socket(AF_INET, SOCK_STREAM)      # IPv4 и TCP-сокет
-        print("Данные получены, сокет создан")
+    def __init__(self):                                   
+        self.ip = "127.0.0.1"                               # IPv4
+        self.port = 12345                                   # Порт
+        self.serv_pub = None                                # Открытый ключ сервера
+        self.serv_priv = None                               # Закрытый ключ сервера
+        self.client_pub = None                              # Открытый ключ клиента
 
-    def start(self):                                    #Чисто для запуска ожидания подключений
-        self.server.bind((self.ip, self.port))          # привязка сокета к IP-адресу и порту
-        self.server.listen(1)                           # количество входящих соединений в очереди -> единица для красоты, т.к сервер однопоточный
+
+    def start(self):                                   
+        self.server = socket(AF_INET, SOCK_STREAM)          # IPv4 и TCP-сокет
+        print("Сервер запущен")
+        self.server.bind((self.ip, self.port))              # Привязка сокета к IP-адресу и порту
+        self.server.listen(5)                               # Количество входящих соединений в очереди
         print("Ожидание входящий соединений")
-        self.user, self.addr = self.server.accept()     # принятие входящего соединения
+        self.user, self.addr = self.server.accept()         # Принятие входящего соединения
         print(f"Соединение установлено с \n\t{self.addr}")
+        
 
-    def stop(self):                                     #Выключаем сервак 
-        self.server.close()                             # закрываю соединение нужен если работаем без with ну и легче привязать к кнопкам и интерфейсу
+    def generate_keys(self):                                # Генерация и обмен ключей
+        (self.serv_pub, self.serv_priv) = rsa.newkeys(512)
+        self.data = self.user.recv(1024)
+        self.client_pub = pickle.loads(self.data)
+        self.data = pickle.dumps(self.serv_pub)
+        self.user.sendall(self.data)
+
+
+    def communicate(self):
+        while True:
+            self.data = self.user.recv(1024)                                    # Получаем данные от клиента
+            self.message = self.data                                            # Преобразуем байты в строку
+            print(f"Шифрованное сообщение клиента: {self.message}")
+            self.message = rsa.decrypt(self.message, self.serv_priv)
+            self.message = self.message.decode("utf-8")
+            if self.message == 'bye':
+                break
+            else:
+                print(f"Расшифрованное сообщение клиента: {self.message}")
+                self.message = self.message[::-1]                                   # Инвертируем строку клиента
+                self.message = rsa.encrypt(self.message.encode("utf-8"), self.client_pub)
+                self.user.send(self.message)                                        # Отправляем сообщение клиенту
+
+    def stop(self):                                                         # Выключаем сервак
+        self.server.close()                            
         print("Сервер выключен!")
 
 
-ip = "127.0.0.1"
-port = 8005 
-s = TcpServer(ip,port)
+
+s = TcpServer()
 s.start()
+s.generate_keys()
+s.communicate()
 s.stop()
-
-'''
-HOST = "127.0.0.1"          # Объявление адреса сервера. Данный аддрес = localhost
-PORT = 8005                 # Объявление порта подключения
-
-server = socket(AF_INET, SOCK_STREAM)
-
-server.bind((HOST,PORT))
-
-server.listen(2)
-
-user, addr = server.accept()
-
-print(f"CONNECTED: \n\t{user}, \n\t{addr}")
-
-user.send('You are connected!'.encode('utf-8'))
-
-##while True:
-'''
