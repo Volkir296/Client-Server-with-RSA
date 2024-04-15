@@ -1,4 +1,4 @@
-#Encrypted data transmission (RSA)
+# Encrypted data transmission (RSA)
 ***
 > [!Note]
 > This project shows a server and client implementation, with message encryption using RSA.
